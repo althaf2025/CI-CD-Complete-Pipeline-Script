@@ -1,0 +1,58 @@
+# Install Java 17
+
+sudo yum install java-17-amazon-corretto-devel
+
+
+# Create sonarqube user
+
+sudo useradd sonarqube
+
+
+# Download SonarQube
+
+wget https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-10.1.0.73491.zip
+
+
+# Move the zip to /opt directory
+
+sudo mv sonarqube-10.1.0.73491.zip /opt/sonarqube-10.1.0.73491.zip
+
+
+# Navigate to /opt directory
+
+cd /opt
+
+
+# Unzip the SonarQube package
+
+sudo unzip sonarqube-10.1.0.73491.zip
+
+
+# Change ownership of the extracted folder
+
+sudo chown -R sonarqube:sonarqube sonarqube-10.1.0.73491
+
+
+# Set a password for the sonarqube user
+
+sudo passwd sonarqube
+
+
+# Switch to sonarqube user
+
+su sonarqube
+
+
+# Navigate to the SonarQube binary folder
+
+cd /opt/sonarqube-10.1.0.73491/bin/linux-x86-64/
+
+
+# Start SonarQube
+
+./sonar.sh start
+
+
+# Check SonarQube status
+
+./sonar.sh status
