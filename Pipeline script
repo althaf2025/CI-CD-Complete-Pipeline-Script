@@ -1,0 +1,66 @@
+pipeline{
+    agent any
+    tools{
+        maven 'mvn'
+    }
+    environment{
+        dockerhub_cred = credentials('dockerhub_cred')
+    }
+    stages{
+        stage('Git Checkout'){
+            steps{
+                checkout scmGit(branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/althaf2025/addreesbook-master.git']])
+            }
+        }
+        stage('Maven Build'){
+            steps{
+                sh 'mvn package'
+            }
+        }
+        stage('Code Analysis'){
+            steps{
+                script{
+                    withSonarQubeEnv('sonarqube'){
+                        sh "mvn clean verify sonar:sonar -Dsonar.projectKey=myaddressbook -Dsonar.projectname=address-book"
+                    }
+                }
+            }
+        }
+        stage('Nexus Artifacts'){
+            steps{
+              nexusArtifactUploader(
+                nexusVersion: 'nexus3',
+                protocol: 'http',
+                nexusUrl: '44.202.133.240:8081',
+                groupId: 'addressbook',
+                version: '2.0-SNAPSHOT',
+                repository: 'maven-snapshots',
+                credentialsId: 'nexus',
+                artifacts: [
+                    [artifactId: 'addressbook',
+                    classifier: '',
+                    file: 'target/addressbook-2.0.war',
+                    type: 'war']
+                ]
+              )
+            }
+        }
+        stage('Docker Build'){
+            steps{
+                sh 'docker build -t althaf2025/jenkins-project .'
+                sh 'docker images'
+            }
+        }
+        stage('Docker Push'){
+            steps{
+                sh 'echo $dockerhub_cred_PSW | docker login -u $dockerhub_cred_USR --password-stdin'
+                sh 'docker push althaf2025/jenkins-project'
+            }
+        }
+        stage('Docker Run'){
+            steps{
+                sh 'docker run -d -p 80:8080 --name test-2 althaf2025/jenkins-project'
+            }
+        }
+    }
+}
